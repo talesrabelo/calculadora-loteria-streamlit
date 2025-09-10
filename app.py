@@ -1,73 +1,34 @@
-
-# -*- coding: utf-8 -*-
+# app.py (versão corrigida)
 import streamlit as st
 import pandas as pd
 
-# --- DADOS E FUNÇÕES PRINCIPAIS (não precisam de alteração) ---
-
 # Fonte: Site oficial da Caixa Econômica Federal
 PROBABILIDADES = {
-    "Dia de Sorte": {
-        7: 2629575, 8: 328697, 9: 73044, 10: 21913, 11: 8041,
-        12: 3446, 13: 1673, 14: 896, 15: 522
-    },
-    "Dupla Sena": {
-        6: 15890700, 7: 2270100, 8: 567525, 9: 189175, 10: 75670,
-        11: 34395, 12: 17197, 13: 9260, 14: 5291, 15: 3218
-    },
-    "Lotofácil": {
-        15: 3268760, 16: 204298, 17: 24035, 18: 4006, 19: 843, 20: 211
-    },
-    "Lotomania": {
-        50: 11372635
-    },
-    "Mega-Sena": {
-        6: 50063860, 7: 7151980, 8: 1787995, 9: 595998, 10: 238399,
-        11: 108363, 12: 54182, 13: 29175, 14: 16671, 15: 10003,
-        16: 6252, 17: 4045, 18: 2697, 19: 1845, 20: 1292
-    },
-    "+Milionária": {
-        6: 238399500, 7: 34057071, 8: 7297944, 9: 2027207, 10: 675736,
-        11: 259898, 12: 109957
-    },
-    "Quina": {
-        5: 24040016, 6: 4006669, 7: 1144763, 8: 429286, 9: 190794,
-        10: 95397, 11: 52034, 12: 30354, 13: 18679, 14: 12008, 15: 8005
-    },
-    "Super Sete": {
-        7: 10000000, 8: 1428571, 9: 357143, 10: 119048, 11: 47619, 12: 21645,
-        13: 10823, 14: 5830, 15: 3331, 16: 1999, 17: 1249, 18: 807, 19: 538,
-        20: 370, 21: 261
-    },
-    "Timemania": {
-        10: 26472637
-    }
+    "Dia de Sorte": {7: 2629575, 8: 328697, 9: 73044, 10: 21913, 11: 8041, 12: 3446, 13: 1673, 14: 896, 15: 522},
+    "Dupla Sena": {6: 15890700, 7: 2270100, 8: 567525, 9: 189175, 10: 75670, 11: 34395, 12: 17197, 13: 9260, 14: 5291, 15: 3218},
+    "Lotofácil": {15: 3268760, 16: 204298, 17: 24035, 18: 4006, 19: 843, 20: 211},
+    "Lotomania": {50: 11372635},
+    "Mega-Sena": {6: 50063860, 7: 7151980, 8: 1787995, 9: 595998, 10: 238399, 11: 108363, 12: 54182, 13: 29175, 14: 16671, 15: 10003, 16: 6252, 17: 4045, 18: 2697, 19: 1845, 20: 1292},
+    "+Milionária": {6: 238399500, 7: 34057071, 8: 7297944, 9: 2027207, 10: 675736, 11: 259898, 12: 109957},
+    "Quina": {5: 24040016, 6: 4006669, 7: 1144763, 8: 429286, 9: 190794, 10: 95397, 11: 52034, 12: 30354, 13: 18679, 14: 12008, 15: 8005},
+    "Super Sete": {7: 10000000, 8: 1428571, 9: 357143, 10: 119048, 11: 47619, 12: 21645, 13: 10823, 14: 5830, 15: 3331, 16: 1999, 17: 1249, 18: 807, 19: 538, 20: 370, 21: 261},
+    "Timemania": {10: 26472637}
 }
 
 def calcular_probabilidade_combinada(prob_individual, qtd_jogos):
-    if qtd_jogos <= 0 or prob_individual <= 0:
-        return float('inf')
-    if prob_individual == 1:
-        return 1.0
+    if qtd_jogos <= 0 or prob_individual <= 0: return float('inf')
+    if prob_individual == 1: return 1.0
     prob_nao_ganhar_individual = (prob_individual - 1) / prob_individual
     prob_nao_ganhar_total = prob_nao_ganhar_individual ** qtd_jogos
     prob_ganhar_total = 1 - prob_nao_ganhar_total
-    if prob_ganhar_total == 0:
-        return float('inf')
+    if prob_ganhar_total == 0: return float('inf')
     return 1 / prob_ganhar_total
 
-# --- INTERFACE DA APLICAÇÃO STREAMLIT ---
 st.set_page_config(page_title="Calculadora de Bolões", layout="wide")
 st.title("📊 Calculadora Comparativa de Bolões da Loteria")
 st.markdown("Compare diferentes estratégias de bolões para ver qual oferece a melhor probabilidade de ganho.")
 
-num_estrategias = st.number_input(
-    "Quantas estratégias de bolão você deseja comparar?",
-    min_value=1,
-    max_value=10,
-    value=2,
-    step=1
-)
+num_estrategias = st.number_input("Quantas estratégias de bolão você deseja comparar?", min_value=1, max_value=10, value=2, step=1)
 
 resultados = []
 jogos_disponiveis = sorted(list(PROBABILIDADES.keys()))
@@ -88,7 +49,12 @@ with st.form("formulario_comparacao"):
                 st.info(f"Aposta única com {num_dezenas} dezenas.")
             else:
                 dezenas_disponiveis = sorted(list(opcoes_dezenas.keys()))
-                num_dezenas = st.selectbox("Dezenas marcadas por jogo:", options=dezenas_disponiveis, key=f"dezenas_{i}")
+                num_dezenas = st.selectbox(
+                    "Dezenas marcadas por jogo:",
+                    options=dezenas_disponiveis,
+                    # --- LINHA CORRIGIDA ABAIXO ---
+                    key=f"dezenas_{i}_{jogo_escolhido}"
+                )
             resultados.append({"index": i, "jogo_escolhido": jogo_escolhido, "valor_premio": valor_premio, "qtd_jogos": qtd_jogos, "num_cotas": num_cotas, "num_dezenas": num_dezenas})
     submitted = st.form_submit_button("Analisar e Comparar Estratégias")
 
