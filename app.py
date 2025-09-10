@@ -1,6 +1,34 @@
-# app.py (versão corrigida)
+# app.py (versão com campo digitável e tabela estilizada)
 import streamlit as st
 import pandas as pd
+
+# --- FUNÇÃO PARA INJETAR CSS ---
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+def style_table():
+    """
+    Adiciona CSS para estilizar a tabela de resultados com fonte maior e texto centralizado.
+    """
+    st.markdown("""
+    <style>
+    .dataframe {
+        text-align: center;
+    }
+    .dataframe th {
+        text-align: center !important;
+        font-size: 18px !important;
+    }
+    .dataframe td {
+        text-align: center !important;
+        font-size: 16px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+# --- DADOS E FUNÇÕES PRINCIPAIS ---
 
 # Fonte: Site oficial da Caixa Econômica Federal
 PROBABILIDADES = {
@@ -24,50 +52,85 @@ def calcular_probabilidade_combinada(prob_individual, qtd_jogos):
     if prob_ganhar_total == 0: return float('inf')
     return 1 / prob_ganhar_total
 
+# --- INTERFACE DA APLICAÇÃO STREAMLIT ---
 st.set_page_config(page_title="Calculadora de Bolões", layout="wide")
 st.title("📊 Calculadora Comparativa de Bolões da Loteria")
 st.markdown("Compare diferentes estratégias de bolões para ver qual oferece a melhor probabilidade de ganho.")
 
 num_estrategias = st.number_input("Quantas estratégias de bolão você deseja comparar?", min_value=1, max_value=10, value=2, step=1)
 
-resultados = []
+estrategias = []
 jogos_disponiveis = sorted(list(PROBABILIDADES.keys()))
+dados_validos = True
 
-with st.form("formulario_comparacao"):
-    cols = st.columns(num_estrategias)
-    for i in range(num_estrategias):
-        with cols[i]:
-            st.header(f"Estratégia #{i + 1}")
-            jogo_escolhido = st.selectbox("Selecione o jogo:", options=jogos_disponiveis, key=f"jogo_{i}")
-            valor_premio = st.number_input("Valor do prêmio (R$)", min_value=0.01, value=1000000.0, step=100000.0, format="%.2f", key=f"premio_{i}")
-            qtd_jogos = st.number_input("Quantidade de jogos no bolão:", min_value=1, value=1, step=1, key=f"qtd_jogos_{i}")
-            num_cotas = st.number_input("Número de cotas do bolão:", min_value=1, value=10, step=1, key=f"cotas_{i}")
-            opcoes_dezenas = PROBABILIDADES[jogo_escolhido]
-            num_dezenas = 0
-            if len(opcoes_dezenas) == 1:
-                num_dezenas = list(opcoes_dezenas.keys())[0]
-                st.info(f"Aposta única com {num_dezenas} dezenas.")
-            else:
-                dezenas_disponiveis = sorted(list(opcoes_dezenas.keys()))
-                num_dezenas = st.selectbox(
-                    "Dezenas marcadas por jogo:",
-                    options=dezenas_disponiveis,
-                    # --- LINHA CORRIGIDA ABAIXO ---
-                    key=f"dezenas_{i}_{jogo_escolhido}"
-                )
-            resultados.append({"index": i, "jogo_escolhido": jogo_escolhido, "valor_premio": valor_premio, "qtd_jogos": qtd_jogos, "num_cotas": num_cotas, "num_dezenas": num_dezenas})
-    submitted = st.form_submit_button("Analisar e Comparar Estratégias")
+st.divider()
 
-if submitted:
-    dados_finais = []
-    for res in resultados:
-        prob_individual = PROBABILIDADES[res['jogo_escolhido']][res['num_dezenas']]
-        prob_final = calcular_probabilidade_combinada(prob_individual, res['qtd_jogos'])
-        premio_por_cota = res['valor_premio'] / res['num_cotas']
-        dados_finais.append({"Estratégia": f"#{res['index'] + 1}", "Jogo": res['jogo_escolhido'], "Detalhes": f"{res['qtd_jogos']} jogo(s) de {res['num_dezenas']} dezenas", "Probabilidade (1 em)": prob_final, "Prêmio por Cota (R$)": premio_por_cota})
-    df = pd.DataFrame(dados_finais)
-    df = df.sort_values(by="Probabilidade (1 em)").reset_index(drop=True)
-    st.subheader(" Quadro Comparativo dos Bolões")
-    st.markdown("*Resultado ordenado da melhor (menor probabilidade) para a pior.*")
-    df_display = df.style.format({"Probabilidade (1 em)": "{:,.0f}".format, "Prêmio por Cota (R$)": "R$ {:,.2f}".format})
-    st.dataframe(df_display, use_container_width=True)
+cols = st.columns(num_estrategias)
+for i in range(num_estrategias):
+    with cols[i]:
+        st.header(f"Estratégia #{i + 1}")
+        
+        jogo_escolhido = st.selectbox("Selecione o jogo:", options=jogos_disponiveis, key=f"jogo_{i}")
+        valor_premio = st.number_input("Valor do prêmio (R$)", min_value=0.01, value=1000000.0, step=100000.0, format="%.2f", key=f"premio_{i}")
+        qtd_jogos = st.number_input("Quantidade de jogos no bolão:", min_value=1, value=1, step=1, key=f"qtd_jogos_{i}")
+        num_cotas = st.number_input("Número de cotas do bolão:", min_value=1, value=10, step=1, key=f"cotas_{i}")
+        
+        opcoes_dezenas = PROBABILIDADES[jogo_escolhido]
+        dezenas_disponiveis = sorted(list(opcoes_dezenas.keys()))
+        num_dezenas = 0
+
+        if len(opcoes_dezenas) == 1:
+            num_dezenas = dezenas_disponiveis[0]
+            st.info(f"Aposta única com {num_dezenas} dezenas.")
+        else:
+            # Campo de dezenas agora é digitável (st.number_input)
+            num_dezenas = st.number_input(
+                f"Dezenas por jogo ({min(dezenas_disponiveis)}-{max(dezenas_disponiveis)})",
+                min_value=min(dezenas_disponiveis),
+                max_value=max(dezenas_disponiveis),
+                value=min(dezenas_disponiveis),
+                step=1,
+                key=f"dezenas_{i}"
+            )
+            # Validação em tempo real
+            if num_dezenas not in dezenas_disponiveis:
+                st.error(f"Número de dezenas inválido para {jogo_escolhido}. Opções: {dezenas_disponiveis}")
+                dados_validos = False
+
+        estrategias.append({
+            "index": i, "jogo_escolhido": jogo_escolhido, "valor_premio": valor_premio,
+            "qtd_jogos": qtd_jogos, "num_cotas": num_cotas, "num_dezenas": num_dezenas
+        })
+
+st.divider()
+
+if st.button("Analisar e Comparar Estratégias", use_container_width=True):
+    if not dados_validos:
+        st.error("Por favor, corrija os erros nos campos de 'dezenas' antes de comparar.")
+    else:
+        dados_finais = []
+        for res in estrategias:
+            prob_individual = PROBABILIDADES[res['jogo_escolhido']][res['num_dezenas']]
+            prob_final = calcular_probabilidade_combinada(prob_individual, res['qtd_jogos'])
+            premio_por_cota = res['valor_premio'] / res['num_cotas']
+            dados_finais.append({
+                "Estratégia": f"#{res['index'] + 1}", "Jogo": res['jogo_escolhido'],
+                "Detalhes": f"{res['qtd_jogos']} jogo(s) de {res['num_dezenas']} dezenas",
+                "Probabilidade (1 em)": prob_final, "Prêmio por Cota (R$)": premio_por_cota
+            })
+        
+        df = pd.DataFrame(dados_finais)
+        df = df.sort_values(by="Probabilidade (1 em)").reset_index(drop=True)
+
+        st.subheader(" Quadro Comparativo dos Bolões")
+        st.markdown("*Resultado ordenado da melhor (menor probabilidade) para a pior.*")
+        
+        # Aplica o estilo na tabela
+        style_table()
+
+        # Formata os números no DataFrame para exibição
+        df_display = df.copy()
+        df_display["Probabilidade (1 em)"] = df["Probabilidade (1 em)"].apply(lambda x: f"{x:,.0f}".replace(",", "."))
+        df_display["Prêmio por Cota (R$)"] = df["Prêmio por Cota (R$)"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+        st.dataframe(df_display, use_container_width=True, hide_index=True)
