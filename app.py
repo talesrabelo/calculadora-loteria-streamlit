@@ -49,7 +49,7 @@ def calcular_probabilidade_combinada(prob_individual, qtd_jogos):
 
 # --- INTERFACE DA APLICAÇÃO STREAMLIT ---
 st.set_page_config(page_title="Calculadora de Bolões", layout="wide")
-st.title("📊 Calculadora Comparativa de Bolões da Loteria")
+st.title("📊 Calculadora Comparativa de Bolões da Loterias Caixa")
 st.markdown("Compare diferentes estratégias de bolões para ver qual oferece a melhor probabilidade de ganho.")
 
 num_estrategias = st.number_input("Quantas estratégias de bolão você deseja comparar?", min_value=1, max_value=10, value=2, step=1)
@@ -63,7 +63,7 @@ st.divider()
 cols = st.columns(num_estrategias)
 for i in range(num_estrategias):
     with cols[i]:
-        st.header(f"Estratégia #{i + 1}")
+        st.header(f"Bolão #{i + 1}")
         
         jogo_escolhido = st.selectbox("Selecione o jogo:", options=jogos_disponiveis, key=f"jogo_{i}")
         valor_premio = st.number_input("Valor do prêmio (R$)", min_value=0.01, value=1000000.0, step=100000.0, format="%.2f", key=f"premio_{i}")
@@ -100,7 +100,7 @@ for i in range(num_estrategias):
 
 st.divider()
 
-if st.button("Analisar e Comparar Estratégias", use_container_width=True):
+if st.button("Analisar e Comparar Bolões", use_container_width=True):
     if not dados_validos:
         st.error("Por favor, corrija os erros nos campos de 'dezenas' antes de comparar.")
     else:
