@@ -49,7 +49,7 @@ def calcular_probabilidade_combinada(prob_individual, qtd_jogos):
 
 # --- INTERFACE DA APLICAÇÃO STREAMLIT ---
 st.set_page_config(page_title="Calculadora de Bolões", layout="wide")
-st.title("📊 Calculadora Comparativa de Bolões da Loterias Caixa")
+st.title("📊 Calculadora Comparativa de Bolões das Loterias da Caixa")
 st.markdown("Compare diferentes estratégias de bolões para ver qual oferece a melhor probabilidade de ganho.")
 
 num_estrategias = st.number_input("Quantas estratégias de bolão você deseja comparar?", min_value=1, max_value=10, value=2, step=1)
