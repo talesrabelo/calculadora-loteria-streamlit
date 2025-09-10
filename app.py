@@ -1,12 +1,8 @@
-# app.py (versão com campo digitável e tabela estilizada)
+# app.py (versão com feedback de formatação do prêmio)
 import streamlit as st
 import pandas as pd
 
-# --- FUNÇÃO PARA INJETAR CSS ---
-def local_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-
+# --- FUNÇÃO PARA ESTILIZAR A TABELA ---
 def style_table():
     """
     Adiciona CSS para estilizar a tabela de resultados com fonte maior e texto centralizado.
@@ -30,7 +26,6 @@ def style_table():
 
 # --- DADOS E FUNÇÕES PRINCIPAIS ---
 
-# Fonte: Site oficial da Caixa Econômica Federal
 PROBABILIDADES = {
     "Dia de Sorte": {7: 2629575, 8: 328697, 9: 73044, 10: 21913, 11: 8041, 12: 3446, 13: 1673, 14: 896, 15: 522},
     "Dupla Sena": {6: 15890700, 7: 2270100, 8: 567525, 9: 189175, 10: 75670, 11: 34395, 12: 17197, 13: 9260, 14: 5291, 15: 3218},
@@ -72,6 +67,12 @@ for i in range(num_estrategias):
         
         jogo_escolhido = st.selectbox("Selecione o jogo:", options=jogos_disponiveis, key=f"jogo_{i}")
         valor_premio = st.number_input("Valor do prêmio (R$)", min_value=0.01, value=1000000.0, step=100000.0, format="%.2f", key=f"premio_{i}")
+        
+        # --- MELHORIA ADICIONADA AQUI ---
+        # Adiciona um texto de feedback mostrando o valor formatado
+        valor_formatado = f"R$ {valor_premio:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        st.caption(f"Valor inserido: **{valor_formatado}**")
+        
         qtd_jogos = st.number_input("Quantidade de jogos no bolão:", min_value=1, value=1, step=1, key=f"qtd_jogos_{i}")
         num_cotas = st.number_input("Número de cotas do bolão:", min_value=1, value=10, step=1, key=f"cotas_{i}")
         
@@ -83,16 +84,11 @@ for i in range(num_estrategias):
             num_dezenas = dezenas_disponiveis[0]
             st.info(f"Aposta única com {num_dezenas} dezenas.")
         else:
-            # Campo de dezenas agora é digitável (st.number_input)
             num_dezenas = st.number_input(
                 f"Dezenas por jogo ({min(dezenas_disponiveis)}-{max(dezenas_disponiveis)})",
-                min_value=min(dezenas_disponiveis),
-                max_value=max(dezenas_disponiveis),
-                value=min(dezenas_disponiveis),
-                step=1,
-                key=f"dezenas_{i}"
+                min_value=min(dezenas_disponiveis), max_value=max(dezenas_disponiveis), value=min(dezenas_disponiveis),
+                step=1, key=f"dezenas_{i}"
             )
-            # Validação em tempo real
             if num_dezenas not in dezenas_disponiveis:
                 st.error(f"Número de dezenas inválido para {jogo_escolhido}. Opções: {dezenas_disponiveis}")
                 dados_validos = False
@@ -125,10 +121,8 @@ if st.button("Analisar e Comparar Estratégias", use_container_width=True):
         st.subheader(" Quadro Comparativo dos Bolões")
         st.markdown("*Resultado ordenado da melhor (menor probabilidade) para a pior.*")
         
-        # Aplica o estilo na tabela
         style_table()
 
-        # Formata os números no DataFrame para exibição
         df_display = df.copy()
         df_display["Probabilidade (1 em)"] = df["Probabilidade (1 em)"].apply(lambda x: f"{x:,.0f}".replace(",", "."))
         df_display["Prêmio por Cota (R$)"] = df["Prêmio por Cota (R$)"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
